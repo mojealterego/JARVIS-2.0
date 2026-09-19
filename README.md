@@ -1,3 +1,13 @@
+<div align="center">
+
+<img src="./assets/social-preview.svg" alt="JARVIS 2.0 — project visual" width="100%">
+
+## MOJEALTEREGO · PROJECT PROFILE
+
+</div>
+
+---
+
 # JARVIS 2.0
 
 Real Android AI assistant project.
