@@ -8,6 +8,15 @@
 
 ---
 
+<!-- MOJEALTEREGO:PROJECT-STATUS:START -->
+> [!IMPORTANT]
+> **MojeAlterego project status:** `PROTOTYPE`  
+> **Domain:** Android / AI / Agents  
+> **Verification:** Application and backend foundations are present; production deployment and end-to-end device verification are not established here.  
+> **Status policy:** [MojeAlterego project status model](https://github.com/mojealterego/mojealterego/blob/main/docs/PROJECT-STATUS.md)
+<!-- MOJEALTEREGO:PROJECT-STATUS:END -->
+
+
 # JARVIS 2.0
 
 Real Android AI assistant project.
