@@ -1,4 +1,5 @@
-FROM node:24-alpine
+ARG NODE_IMAGE=public.ecr.aws/docker/library/node:24-alpine
+FROM ${NODE_IMAGE}
 
 WORKDIR /app
 COPY package.json ./

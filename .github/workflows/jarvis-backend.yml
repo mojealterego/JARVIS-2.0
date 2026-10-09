@@ -32,3 +32,5 @@ jobs:
       - run: npm test
       - name: Verify container build
         run: docker build -t jarvis-backend:ci .
+      - name: Verify container startup
+        run: node scripts/container-smoke.mjs
