@@ -1,9 +1,17 @@
 {
   "name": "jarvis-2-backend",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
-  "scripts": { "start": "node server.mjs" },
-  "dependencies": { "busboy": "^1.6.0", "pg": "^8.16.3" }
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check server.mjs"
+  },
+  "dependencies": {
+    "busboy": "1.6.0"
+  }
 }

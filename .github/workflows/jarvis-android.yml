@@ -52,6 +52,9 @@ jobs:
         if: steps.eas.outcome == 'success'
         continue-on-error: true
         run: eas build --platform android --profile preview --non-interactive --wait --json > eas-build.json
+      - name: Diagnose EAS result
+        if: always() && steps.cloud.outcome != 'skipped'
+        run: node ../scripts/diagnose-eas-build.mjs eas-build.json
       - name: Collect EAS APK
         id: collect
         if: steps.cloud.outcome == 'success'
@@ -66,6 +69,9 @@ jobs:
       - name: Set up Android SDK for local build
         if: steps.collect.outcome != 'success'
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - name: Build local preview APK and AAB
         if: steps.collect.outcome != 'success'
         run: |

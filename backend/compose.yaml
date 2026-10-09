@@ -1,0 +1,14 @@
+services:
+  jarvis:
+    build: .
+    env_file: .env
+    environment:
+      JARVIS_STATE_FILE: /app/data/jarvis-state.json
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - jarvis-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  jarvis-data:

@@ -1,0 +1,34 @@
+name: JARVIS Backend Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/jarvis-backend.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/jarvis-backend.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npm run check
+      - run: npm test
+      - name: Verify container build
+        run: docker build -t jarvis-backend:ci .

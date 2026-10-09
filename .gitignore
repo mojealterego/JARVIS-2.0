@@ -13,3 +13,6 @@ jarvis-2-android/android/
 jarvis-2-android/dist-check/
 jarvis-2-android/artifacts/
 jarvis-2-android/eas-build.json
+
+backend/data/
+jarvis-state.json.*.tmp
