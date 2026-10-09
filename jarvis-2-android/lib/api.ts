@@ -1,3 +1,5 @@
+import { normalizeApiUrl } from './url';
+export { normalizeApiUrl } from './url';
 import * as SecureStore from 'expo-secure-store';
 
 const API_URL_KEY = 'jarvis_api_url';
@@ -14,19 +16,6 @@ export type MemoryEntry = { id: string; content: string; createdAt: string };
 export type Approval = { id: string; action: string; status: 'pending' | 'approved' | 'rejected'; createdAt: string };
 export type Automation = { id: string; name: string; agent: string; schedule: string; enabled: boolean; createdAt: string };
 
-export function normalizeApiUrl(value: string): string {
-  let parsed: URL;
-  try { parsed = new URL(value.trim()); } catch { throw new Error('Podaj poprawny adres serwera HTTP lub HTTPS.'); }
-  if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password || parsed.search || parsed.hash) {
-    throw new Error('Adres serwera musi używać HTTP lub HTTPS i nie może zawierać hasła, parametrów ani fragmentu.');
-  }
-  const host = parsed.hostname;
-  const local = host === 'localhost' || host === '[::1]' || host === '::1' ||
-    /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) ||
-    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host);
-  if (parsed.protocol === 'http:' && !local) throw new Error('Publiczny serwer wymaga HTTPS. HTTP jest dostępne dla sieci lokalnej.');
-  return parsed.toString().replace(/\/+$/, '');
-}
 
 export async function getApiUrl(): Promise<string> {
   return (await SecureStore.getItemAsync(API_URL_KEY)) || DEFAULT_API_URL;

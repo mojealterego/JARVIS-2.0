@@ -35,6 +35,8 @@ jobs:
         run: npm install
       - name: Verify Expo dependency compatibility
         run: npx expo install --check
+      - name: Verify connection URL policy
+        run: npm test
       - name: Verify TypeScript
         run: npm run typecheck
       - name: Verify Expo configuration
