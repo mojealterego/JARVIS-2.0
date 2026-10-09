@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/jarvis-dependencies.yml'
+      - 'jarvis-2-android/package.json'
 
 permissions:
   contents: read
@@ -29,7 +30,6 @@ jobs:
       - name: Report actionable dependency findings
         run: node ../scripts/summarize-dependencies.mjs
       - name: Check Expo dependency compatibility
-        continue-on-error: true
         run: npx expo install --check
       - uses: actions/upload-artifact@v4
         if: always()
