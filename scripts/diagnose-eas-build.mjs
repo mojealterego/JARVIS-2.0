@@ -12,7 +12,7 @@ for (const build of Array.isArray(source) ? source : [source]) {
       if (!response.ok) continue;
       const content = await response.text();
       const lines = content.split('\n').filter(line => /error|failed|exception|not found|unsupported|incompatible/i.test(line));
-      console.log(lines.slice(-25).join('\n').slice(0,6000));
+      console.log([...lines.slice(0,30), ...lines.slice(-15)].join('\n').slice(0,10000));
     } catch { console.log('EAS remote log could not be read.'); }
   }
 }
