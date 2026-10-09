@@ -22,14 +22,24 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+      - name: Install project config dependencies
+        if: env.EXPO_TOKEN != ''
+        working-directory: jarvis-2-android
+        run: |
+          npm install --package-lock-only
+          npm ci
       - uses: expo/expo-github-action@v8
         if: env.EXPO_TOKEN != ''
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Read latest Android build
+        continue-on-error: true
         if: env.EXPO_TOKEN != ''
         working-directory: jarvis-2-android
         run: |
           eas build:list --platform android --limit 1 --json --non-interactive > eas-status.json
-          node ../scripts/inspect-eas-build.mjs eas-status.json
+      - name: Report build phase
+        if: always() && env.EXPO_TOKEN != ''
+        working-directory: jarvis-2-android
+        run: node ../scripts/inspect-eas-build.mjs eas-status.json

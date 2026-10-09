@@ -8,6 +8,7 @@ for (const build of Array.isArray(source) ? source : [source]) {
     sourceCommit: build.gitCommitHash, version: build.appVersion,
     error: build.error
   }));
+  if (!build.id) process.exitCode = 1;
   const phases = [];
   for (const url of (build.logFiles ?? []).slice(-3)) {
     try {
