@@ -4,16 +4,25 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths:
+      - 'jarvis-2-android/**'
+      - 'scripts/collect-android-build.mjs'
+      - '.github/workflows/jarvis-android.yml'
 
 permissions:
   contents: read
 
-env:
-  EXPO_ACCOUNT: mojealterego
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CI: '1'
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
     defaults:
       run:
         working-directory: jarvis-2-android
@@ -22,26 +31,66 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - name: Check Expo token
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          if [ -z "$EXPO_TOKEN" ]; then
-            echo "EXPO_TOKEN secret is missing."
-            exit 1
-          fi
-      - name: Setup Expo and EAS
+      - name: Install dependencies
+        run: npm install
+      - name: Verify TypeScript
+        run: npm run typecheck
+      - name: Verify Expo configuration
+        run: npx expo config --type public
+      - name: Verify Android bundle
+        run: npx expo export --platform android --output-dir dist-check
+      - name: Setup EAS
+        id: eas
+        if: env.EXPO_TOKEN != ''
+        continue-on-error: true
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
-      - name: Install dependencies
-        run: npm install
-      - name: Verify TypeScript
-        run: npx tsc --noEmit
-      - name: Verify Expo configuration
-        run: npx expo config --type public
-      - name: Initialize or link EAS project
-        run: eas init --account "$EXPO_ACCOUNT" --non-interactive
-      - name: Build Android APK
-        run: eas build --platform android --profile preview --non-interactive --no-wait
+      - name: Build Android APK on EAS
+        id: cloud
+        if: steps.eas.outcome == 'success'
+        continue-on-error: true
+        run: eas build --platform android --profile preview --non-interactive --wait --json > eas-build.json
+      - name: Collect EAS APK
+        id: collect
+        if: steps.cloud.outcome == 'success'
+        continue-on-error: true
+        run: node ../scripts/collect-android-build.mjs eas-build.json
+      - name: Set up Java for local build
+        if: steps.collect.outcome != 'success'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK for local build
+        if: steps.collect.outcome != 'success'
+        uses: android-actions/setup-android@v3
+      - name: Build local preview APK and AAB
+        if: steps.collect.outcome != 'success'
+        run: |
+          npx expo prebuild --platform android --no-install
+          cd android
+          ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon
+          cd ..
+          mkdir -p artifacts
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/JARVIS-2.0-preview.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab artifacts/JARVIS-2.0-preview.aab
+          node ../scripts/collect-android-build.mjs --local
+      - name: Save Android files
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-2.0-Android-${{ github.sha }}
+          path: jarvis-2-android/artifacts/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Save build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-build-diagnostics-${{ github.sha }}
+          path: |
+            jarvis-2-android/eas-build.json
+            jarvis-2-android/package-lock.json
+            jarvis-2-android/package.json
+          if-no-files-found: ignore

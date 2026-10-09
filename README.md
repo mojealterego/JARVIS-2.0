@@ -34,4 +34,8 @@ The backend defaults to port `8787` and supports authenticated API access throug
 
 ## Current status
 
-Foundation initialized: Expo Android shell, command center, authenticated API client, backend core API, and EAS CI pipeline.
+Android compilation repairs and connection improvements are being verified through GitHub Actions. The APK workflow waits for EAS and downloads a completed APK. When EAS is unavailable, it builds an internal testing APK and AAB with Gradle and the generated debug keystore. Build provenance and SHA-256 checksums are included with each artifact.
+
+The mobile app preserves stored credentials on settings changes, validates server URLs, sends conversation history, loads the agent response envelope, handles microphone errors and supports task completion. Public servers require HTTPS; local HTTP is supported only for private IP addresses and localhost.
+
+An installable APK is published as a GitHub Actions artifact only after compilation finishes. An internal testing AAB is not a Play Store release.

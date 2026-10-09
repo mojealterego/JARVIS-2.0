@@ -8,3 +8,8 @@ jarvis-state.json
 .DS_Store
 android/.gradle/
 android/local.properties
+
+jarvis-2-android/android/
+jarvis-2-android/dist-check/
+jarvis-2-android/artifacts/
+jarvis-2-android/eas-build.json
