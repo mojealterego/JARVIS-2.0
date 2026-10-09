@@ -7,6 +7,8 @@ on:
     paths:
       - '.github/workflows/jarvis-dependencies.yml'
       - 'jarvis-2-android/package.json'
+      - 'jarvis-2-android/lib/**'
+      - 'jarvis-2-android/test/**'
 
 permissions:
   contents: read
@@ -24,6 +26,10 @@ jobs:
         with:
           node-version: 24
       - run: npm install
+      - name: Verify client types and connection policy
+        run: |
+          npm run typecheck
+          npm test
       - name: Record dependency audit
         continue-on-error: true
         run: npm audit --json > npm-audit.json

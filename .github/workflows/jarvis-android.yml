@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: android-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -81,7 +81,7 @@ jobs:
         run: |
           npx expo prebuild --platform android --no-install
           cd android
-          ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon
+          ./gradlew :app:assembleRelease :app:bundleRelease --no-daemon --console=plain
           cd ..
           mkdir -p artifacts
           cp android/app/build/outputs/apk/release/app-release.apk artifacts/JARVIS-2.0-preview.apk

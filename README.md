@@ -80,6 +80,22 @@ For a container deployment, run `docker compose up --build` from `backend/`. Com
 | `backend/test/` | Backend regression tests |
 | `.github/workflows/` | Verification and Android builds |
 
+## Dependency audit — 2026-10-09
+
+The [dependency check](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37992735670) passes Expo SDK compatibility after aligning React Native to 0.86.3 and the SDK 57 native peers. A UUID override to 11.1.1 reduces the npm report from 28 to 21 affected package entries (18 high, 3 moderate). These entries derive from three underlying advisories; the audit is not clean.
+
+| Dependency | Advisory | Current handling |
+| --- | --- | --- |
+| braces | [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) | Upstream advisory lists no patched version; remains in the Metro/build dependency chain. |
+| node-forge | [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv) | Upstream advisory lists no patched version; remains in Expo certificate tooling. |
+| decode-uri-component | [GHSA-vcc3-ghjq-m6fr](https://github.com/advisories/GHSA-vcc3-ghjq-m6fr) | Upstream 0.5.0 is ESM; Expo Router 57 uses query-string 7 with a CommonJS decoder import. A direct override would change that runtime contract. An SDK-compatible routing update is still required. |
+
+The report is preserved as a workflow artifact. Forced npm downgrades to older Expo/React Native SDKs have not been applied. Production release requires resolving or assessing the remaining dependency findings and testing the app on a device.
+
 ## Verification status — 2026-10-09
 
-TypeScript and Android bundle repairs are under verification in GitHub Actions. The backend refactor and 18 tests are being run. Build links and final artifact provenance will be recorded after the checks finish. No physical-device verification or production deployment has been performed in this session.
+The [backend verification](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37991814756) passed all 18 regression tests, built the container and verified authenticated health and task persistence against the running container. AI calls use test fixtures.
+
+The repaired TypeScript, Expo configuration and Android JavaScript bundle passed in CI. The latest native APK/AAB is still being verified after the dependency and URL-policy updates. The client also has three regression tests covering HTTPS enforcement, misleading domain names and local development URLs. Final build links and artifact provenance will be recorded when native compilation finishes.
+
+No physical-device verification, live OpenAI call or production deployment has been performed in this session.
