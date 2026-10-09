@@ -1,0 +1,41 @@
+name: JARVIS Dependency Inspection
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/jarvis-dependencies.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: jarvis-2-android
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm install
+      - name: Record dependency audit
+        continue-on-error: true
+        run: npm audit --json > npm-audit.json
+      - name: Report actionable dependency findings
+        run: node ../scripts/summarize-dependencies.mjs
+      - name: Check Expo dependency compatibility
+        continue-on-error: true
+        run: npx expo install --check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: JARVIS-dependency-report-${{ github.sha }}
+          path: |
+            jarvis-2-android/npm-audit.json
+            jarvis-2-android/package-lock.json
+          if-no-files-found: error
