@@ -1,0 +1,61 @@
+{
+  "verifiedAt": "2026-10-09T21:51:19Z",
+  "android": {
+    "package": "com.jarvis.commandos",
+    "version": "3.1.1",
+    "versionCode": "3",
+    "sourceCommit": "ff6953739bbd85fbe1492aeb5ade2ad414111fec",
+    "buildId": "4d55e952-de70-4c88-b929-c0173e36fb4e",
+    "signing": "EAS managed Android credentials",
+    "apkBytes": 102019782,
+    "apkSha256": "99c595017b17f5d53d8878f3c6b000793dc04ddb9dd47a55014389c4d8cd413c",
+    "checks": [
+      "SHA256 manifest",
+      "Android signature",
+      "source commit",
+      "package and version",
+      "microphone permission",
+      "backup disabled",
+      "local HTTP configuration"
+    ],
+    "artifactUrl": "https://github.com/mojealterego/JARVIS-2.0/actions/runs/37993347864/artifacts/11646453319",
+    "artifactExpiresAt": "2026-11-08T21:46:09Z",
+    "buildRun": 37993347864,
+    "verificationRun": 37995871790,
+    "verificationArtifactUrl": "https://github.com/mojealterego/JARVIS-2.0/actions/runs/37995871790/artifacts/11646204256"
+  },
+  "backend": {
+    "sourceCommit": "9718caa7c6cb0aee4baac9ef38fb00beb2ca4478",
+    "run": 37991814756,
+    "passedTests": 18,
+    "containerBuild": "passed",
+    "containerSmoke": "passed",
+    "aiTransport": "fixtures"
+  },
+  "client": {
+    "sourceCommit": "ff6953739bbd85fbe1492aeb5ade2ad414111fec",
+    "run": 37993347888,
+    "passedTests": 3,
+    "testRuntime": "Node.js",
+    "typeScript": "passed",
+    "cleanInstall": "passed",
+    "expoCompatibility": "passed"
+  },
+  "dependencyAudit": {
+    "affectedPackageEntries": 21,
+    "underlyingAdvisories": 3,
+    "high": 18,
+    "moderate": 3,
+    "clean": false
+  },
+  "notVerified": [
+    "physical Android device",
+    "live OpenAI calls",
+    "production deployment",
+    "production AAB"
+  ],
+  "featureBoundaries": {
+    "automationScheduler": "configuration only",
+    "externalIntegrations": "not connected"
+  }
+}

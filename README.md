@@ -63,6 +63,8 @@ npm test
 docker build -t jarvis-backend .
 ```
 
+Run the three client URL-policy regressions with `npm test` in `jarvis-2-android/`. They execute in Node; they do not exercise Android device networking.
+
 The 18 backend regressions exercise authentication, client contracts, 32 concurrent writes, restart persistence, immutable IDs, approval conflicts, upload limits and Responses parsing. AI transport is replaced by test fixtures; these tests do not validate a paid live provider call or physical microphone hardware.
 
 For a container deployment, run `docker compose up --build` from `backend/`. Compose binds port 8787 to host loopback and persists state in a named volume. Put an HTTPS reverse proxy in front of it for public access. Set `JARVIS_ALLOWED_ORIGINS` to a comma-separated allowlist only when using a browser client; native Android requests do not require CORS.
@@ -82,7 +84,7 @@ For a container deployment, run `docker compose up --build` from `backend/`. Com
 
 ## Dependency audit — 2026-10-09
 
-The [dependency check](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37992735670) passes Expo SDK compatibility after aligning React Native to 0.86.3 and the SDK 57 native peers. A UUID override to 11.1.1 reduces the npm report from 28 to 21 affected package entries (18 high, 3 moderate). These entries derive from three underlying advisories; the audit is not clean.
+The [dependency check](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37993347888) passes Expo SDK compatibility after aligning React Native to 0.86.3 and the SDK 57 native peers. A UUID override to 11.1.1 reduces the npm report from 28 to 21 affected package entries (18 high, 3 moderate). These entries derive from three underlying advisories; the audit is not clean.
 
 | Dependency | Advisory | Current handling |
 | --- | --- | --- |
@@ -94,8 +96,23 @@ The report is preserved as a workflow artifact. Forced npm downgrades to older E
 
 ## Verification status — 2026-10-09
 
-The [backend verification](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37991814756) passed all 18 regression tests, built the container and verified authenticated health and task persistence against the running container. AI calls use test fixtures.
+The current milestone has a built and verified **Android preview APK 3.1.1**, signed with the existing EAS-managed Android credentials.
 
-The repaired TypeScript, Expo configuration and Android JavaScript bundle passed in CI. The latest native APK/AAB is still being verified after the dependency and URL-policy updates. The client also has three regression tests covering HTTPS enforcement, misleading domain names and local development URLs. Final build links and artifact provenance will be recorded when native compilation finishes.
+**[Download the APK package](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37993347864/artifacts/11646453319)**. The ZIP contains `JARVIS-2.0-preview.apk`, `SHA256SUMS.txt` and `build-info.json`. This artifact expires on 2026-11-08.
 
-No physical-device verification, live OpenAI call or production deployment has been performed in this session.
+| Check | Observed result |
+| --- | --- |
+| [Backend CI](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37991814756) | 18 tests passed; container build and authenticated startup/task smoke test passed. |
+| [Client CI](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37993347888) | Clean `npm ci`, TypeScript, three Node-based URL-policy tests and Expo dependency compatibility passed. |
+| [Android build](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37993347864) | Android JavaScript export and EAS Gradle preview build passed; APK downloaded and saved. |
+| [APK verification](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37995871790) | Signature, SHA256 checks, source commit, package/version, microphone permission, disabled backup and local HTTP manifest configuration passed. |
+
+The APK package is `com.jarvis.commandos`, version `3.1.1`, version code `3`, size **102,019,782 bytes**. Its source commit is `ff6953739bbd85fbe1492aeb5ade2ad414111fec`.
+
+```text
+99c595017b17f5d53d8878f3c6b000793dc04ddb9dd47a55014389c4d8cd413c  JARVIS-2.0-preview.apk
+```
+
+The [verification report](https://github.com/mojealterego/JARVIS-2.0/actions/runs/37995871790/artifacts/11646204256) includes the inspected Android manifest and signature information. A compact permanent record is in [docs/verification-2026-10-09.json](./docs/verification-2026-10-09.json).
+
+This is an internal-testing milestone. The 21 dependency audit entries listed above remain open. No physical-device test, live OpenAI call, production deployment or production AAB build was performed. Chat requires a reachable backend with its API token and an OpenAI key configured on the server. Automation scheduling and external integrations remain unimplemented, as described above.
