@@ -39,16 +39,28 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
+            const artifactFor = async (run) => {
+              const result = await github.rest.actions.listWorkflowRunArtifacts({owner, repo, run_id: run.id, per_page: 100});
+              return result.data.artifacts.find(artifact => !artifact.expired && artifact.name === 'JARVIS-2.0-Android-' + run.head_sha);
+            };
             let run = context.payload.workflow_run;
+            let artifact;
             if (process.env.REQUESTED_RUN) {
               run = (await github.rest.actions.getWorkflowRun({owner, repo, run_id: Number(process.env.REQUESTED_RUN)})).data;
             }
-            if (!run) {
-              const result = await github.rest.actions.listWorkflowRuns({owner, repo, workflow_id: 'jarvis-android.yml', branch: 'main', status: 'success', per_page: 1});
-              run = result.data.workflow_runs[0];
+            if (run) {
+              if (run.status !== 'completed' || run.conclusion !== 'success' || run.head_branch !== 'main') throw new Error('A successful main-branch build is required.');
+              artifact = await artifactFor(run);
+              if (!artifact) throw new Error('The selected run has no downloadable Android artifact.');
+            } else {
+              const result = await github.rest.actions.listWorkflowRuns({owner, repo, workflow_id: 'jarvis-android.yml', branch: 'main', status: 'success', per_page: 10});
+              for (const candidate of result.data.workflow_runs) {
+                artifact = await artifactFor(candidate);
+                if (artifact) { run = candidate; break; }
+              }
             }
-            if (!run) { core.notice('No completed Android build is available yet. Verification will run when it completes.'); return; }
-            if (run.status !== 'completed' || run.conclusion !== 'success' || run.head_branch !== 'main') throw new Error('A successful main-branch build is required.');
+            if (!run) { core.notice('No downloadable Android build is available yet. Verification will run when it completes.'); return; }
+            core.setOutput('artifact_name', artifact.name);
             const file = (await github.rest.repos.getContent({owner, repo, path: 'jarvis-2-android/app.json', ref: run.head_sha})).data;
             const config = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8')).expo;
             core.setOutput('run_id', String(run.id));
@@ -61,8 +73,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           run-id: ${{ steps.source.outputs.run_id }}
-          pattern: JARVIS-2.0-Android-*
-          merge-multiple: true
+          name: ${{ steps.source.outputs.artifact_name }}
           path: artifacts
       - uses: actions/setup-java@v5
         if: steps.source.outputs.run_id != ''
