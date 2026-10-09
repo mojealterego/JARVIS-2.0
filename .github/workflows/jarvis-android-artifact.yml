@@ -1,0 +1,103 @@
+name: JARVIS Android Artifact Verification
+
+on:
+  workflow_run:
+    workflows: ['JARVIS Android APK']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Completed Android build run (empty selects latest success)'
+        required: false
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/jarvis-android-artifact.yml'
+      - 'scripts/verify-android-artifact.mjs'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Resolve source build
+        id: source
+        uses: actions/github-script@v8
+        env:
+          REQUESTED_RUN: ${{ inputs.run_id }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            let run = context.payload.workflow_run;
+            if (process.env.REQUESTED_RUN) {
+              run = (await github.rest.actions.getWorkflowRun({owner, repo, run_id: Number(process.env.REQUESTED_RUN)})).data;
+            }
+            if (!run) {
+              const result = await github.rest.actions.listWorkflowRuns({owner, repo, workflow_id: 'jarvis-android.yml', branch: 'main', status: 'success', per_page: 1});
+              run = result.data.workflow_runs[0];
+            }
+            if (!run) { core.notice('No completed Android build is available yet. Verification will run when it completes.'); return; }
+            if (run.status !== 'completed' || run.conclusion !== 'success' || run.head_branch !== 'main') throw new Error('A successful main-branch build is required.');
+            const file = (await github.rest.repos.getContent({owner, repo, path: 'jarvis-2-android/app.json', ref: run.head_sha})).data;
+            const config = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8')).expo;
+            core.setOutput('run_id', String(run.id));
+            core.setOutput('sha', run.head_sha);
+            core.setOutput('package', config.android.package);
+            core.setOutput('version', config.version);
+            core.setOutput('version_code', String(config.android.versionCode));
+      - uses: actions/download-artifact@v4
+        if: steps.source.outputs.run_id != ''
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          pattern: JARVIS-2.0-Android-*
+          merge-multiple: true
+          path: artifacts
+      - uses: actions/setup-java@v5
+        if: steps.source.outputs.run_id != ''
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        if: steps.source.outputs.run_id != ''
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Verify Android archive and signature
+        if: steps.source.outputs.run_id != ''
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          EXPECTED_PACKAGE: ${{ steps.source.outputs.package }}
+          EXPECTED_VERSION: ${{ steps.source.outputs.version }}
+          EXPECTED_VERSION_CODE: ${{ steps.source.outputs.version_code }}
+        run: |
+          sdkmanager 'build-tools;36.0.0'
+          cd artifacts
+          sha256sum --check SHA256SUMS.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs JARVIS-2.0-preview.apk > signature.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging JARVIS-2.0-preview.apk > apk-info.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump xmltree JARVIS-2.0-preview.apk AndroidManifest.xml > manifest-tree.txt
+          node ../scripts/verify-android-artifact.mjs
+      - uses: actions/upload-artifact@v4
+        if: steps.source.outputs.run_id != ''
+        with:
+          name: Android-verification-${{ steps.source.outputs.sha }}
+          path: |
+            artifacts/verification.json
+            artifacts/signature.txt
+            artifacts/apk-info.txt
+            artifacts/manifest-tree.txt
+          if-no-files-found: error
+          retention-days: 30
