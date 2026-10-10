@@ -42,6 +42,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const response = await fetch(base + path, { ...init, headers, signal: controller.signal });
+    if (response.status === 204 && response.ok) return undefined as T;
     let payload: unknown;
     try { payload = await response.json(); } catch { throw new Error('Serwer zwrócił niepoprawną odpowiedź (HTTP ' + response.status + ').'); }
     if (!response.ok) {
@@ -61,6 +62,8 @@ export const api = {
   tasks: () => request<Task[]>('/api/tasks'),
   approvals: () => request<Approval[]>('/api/approvals'),
   memory: () => request<MemoryEntry[]>('/api/memory'),
+  searchMemory: (query: string, limit = 20) => request<{ query: string; results: (MemoryEntry & { relevance: number; source: string })[]; total: number }>('/api/memory/search', { method: 'POST', body: JSON.stringify({ query, limit }) }),
+  deleteMemory: (id: string) => request<void>('/api/memory/' + encodeURIComponent(id), { method: 'DELETE' }),
   automations: () => request<Automation[]>('/api/automations'),
   chat: (text: string, history: Message[] = []) =>
     request<ChatReply>('/api/chat', { method: 'POST', body: JSON.stringify({ text, history }) }),
