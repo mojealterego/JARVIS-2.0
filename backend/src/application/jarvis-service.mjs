@@ -39,7 +39,7 @@ export class JarvisService {
       const query = text(data.query, 'query', 300).toLocaleLowerCase('pl');
       const limit = data.limit ?? 20;
       if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new AppError(400, 'limit must be between 1 and 50');
-      const terms = [...new Set(query.split(/\\s+/u).filter(Boolean))];
+      const terms = [...new Set(query.split(/\s+/u).filter(Boolean))];
       const state = await this.store.read();
       const results = state.memory
         .map(entry => {
@@ -53,7 +53,7 @@ export class JarvisService {
         .map(({ entry, score }) => ({ ...entry, relevance: score, source: 'user-memory' }));
       return { status: 200, payload: { query: data.query, results, total: results.length } };
     }
-    if (method === 'DELETE' && /^\\/api\\/memory\\/[^/]+$/.test(path)) {
+    if (method === 'DELETE' && /^\/api\/memory\/[^/]+$/.test(path)) {
       const id = decodeURIComponent(path.slice('/api/memory/'.length));
       await this.store.transaction(state => {
         const index = state.memory.findIndex(entry => entry.id === id);
