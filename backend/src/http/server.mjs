@@ -46,7 +46,7 @@ export function createJarvisServer({ service, token, allowedOrigins = [], maxJso
         response.setHeader('Access-Control-Allow-Origin', origin);
         response.setHeader('Vary', 'Origin');
         response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-        response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+        response.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
       }
       if (request.method === 'OPTIONS') return send(204);
       if (!timingSafeEqual(expected, digest(request.headers.authorization ?? ''))) {
