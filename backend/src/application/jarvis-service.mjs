@@ -34,6 +34,36 @@ export class JarvisService {
       const state = await this.store.read();
       return { status: 200, payload: match[1] === 'audit' ? state.audit.slice(-200).reverse() : state[match[1]] };
     }
+    if (method === 'POST' && path === '/api/memory/search') {
+      object(data);
+      const query = text(data.query, 'query', 300).toLocaleLowerCase('pl');
+      const limit = data.limit ?? 20;
+      if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new AppError(400, 'limit must be between 1 and 50');
+      const terms = [...new Set(query.split(/\\s+/u).filter(Boolean))];
+      const state = await this.store.read();
+      const results = state.memory
+        .map(entry => {
+          const body = String(entry.content ?? '').toLocaleLowerCase('pl');
+          const score = terms.reduce((sum, term) => sum + (body.includes(term) ? 1 : 0), 0);
+          return { entry, score };
+        })
+        .filter(result => result.score > 0)
+        .sort((a, b) => b.score - a.score || String(b.entry.createdAt).localeCompare(String(a.entry.createdAt)))
+        .slice(0, limit)
+        .map(({ entry, score }) => ({ ...entry, relevance: score, source: 'user-memory' }));
+      return { status: 200, payload: { query: data.query, results, total: results.length } };
+    }
+    if (method === 'DELETE' && /^\\/api\\/memory\\/[^/]+$/.test(path)) {
+      const id = decodeURIComponent(path.slice('/api/memory/'.length));
+      await this.store.transaction(state => {
+        const index = state.memory.findIndex(entry => entry.id === id);
+        if (index === -1) throw new AppError(404, 'not_found');
+        state.memory.splice(index, 1);
+        state.audit.push({ event: 'memory.deleted', itemId: id, createdAt: now() });
+        state.audit = state.audit.slice(-2000);
+      });
+      return { status: 204, payload: null };
+    }
     if (method === 'POST' && path === '/api/chat') {
       object(data);
       const value = text(data.message ?? data.text, 'message', 16000);
